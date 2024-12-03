@@ -1,0 +1,424 @@
+
+Good Morning 
+
+Welcome to Oracle Linux Administration I Training - DAY1
+           ______________________________
+This is Palani Karthikeyan(Call me: Karthik) Trainer
+        ====================================
+We will start session @ 9:30 AM IST
+                      _________
+
+############################################################################
+
+OS -> System software ->Interface between user and H/w resource
+
+	+----------------+
+	| User
+	+----------------+
+	| OS
+	+----------------+
+	| H/W
+	+----------------+
+
+	Kernel - Core part of an OS
+
+	Unix - AT&T ->1969 ..1971/72 	- portable 
+				C 
+	minix  - education only 
+	HpUx	
+
+	GNU Project - 1983
+		 - DB,bash,grub,gzip,gcc,....
+	
+	Linux ->GNU Linux -- 1991
+
+	OS = Kernel + Utilites 
+		|	 
+		Linux
+	-------------------------------------------------------
+		
+	RedHat
+	Debian
+
+	RHL => uname ->Linux		Vs	Ubuntu -> uname ->Linux
+	|
+	|---> yum install httpd			   |--> apt-get install apache2
+		<or>						<or>
+	      dnf install httpd				apt install apache2
+
+
+
+	Kernel - File,Process
+
+
+	+-----------------------------+
+	| User
+	+-----------------------------+
+	| OS (Kernel - File, Process)
+	+-----------------------------+
+	| H/W
+	+-----------------------------+
+
+	File - Data - under the storage 
+	|			=======
+	Process - Data - under the CPU
+				   ===//1.fetch data from memory
+					2.stores to register
+					3.execute //process
+
+	---------------------------------
+	 User : Appn
+	--------------//shell------------
+		|
+	      systemcall() = FD   (FD=0 <STDIN>;FD=1 STDOUT ; FD=2 STDERR)
+					
+					date >r1.log
+					|->write command(date) results to r1.log file
+					datee >err.log
+					|->display to monitor
+
+	command 
+	|  |
+	success
+	|  |
+	|  failed
+	|  |
+	|  STDERR
+	STDOUT
+	
+	command FD>resultfile
+		|
+		default FD value is 1
+
+	datee >err.log   Vs  datee 2>err.log
+	  |			   |
+	display to monitor	  writing to file
+
+
+Appl : printf("Hello");    cout<<"Hello";    echo "Hello" print("Hello")  puts("Hello")
+|
+-------------------------------------------------------------------------------------------
+	
+Linux	  	write("Hello") = FD 
+
+	FD = 0 <STDIN>
+	FD = 1  STDOUT
+	FD = 2  STDERR
+
+	FD = 0x1234 <== memory related Call
+	
+	FD = 3 to 2 pow 32/64 <== Valid Call
+
+	FD = -1 <== Failed Call
+
+	strace <command>
+
+User View		   Kernel
+cat /etc/passwd 	=> FD=3
+cat emp.csv		=> FD=4
+cat /etc/passwd		=> FD=5
+cat pp.log 
+No Such File pp.log	=> FD=-1
+
+cat /var/log/boot.log   => FD=6
+
+
+       ---------------------------------
+	 User : Appn
+	--------------//shell------------
+		|
+	      systemcall() = FD   (FD=0 <STDIN>;FD=1 STDOUT ; FD=2 STDERR)
+		|
+	     [FileSystem]<--->[Process Control Block - PCB   ]
+		|		|->IPC | SCHED | Net |Memory 
+		|
+	      [Device Driver] - modules
+		|
+	      [Device Controller <or> Hardware Controller]
+		|
+	-------------------------------------
+	 CPU RAM HD IO Network <= H/W
+
+		
+
+shell
+------
+ |->command line interface 
+ |->Interface between User and Kernel 
+
+ |->Types of shell
+    ----------------
+    1.BourneSHell (sh)  -> 2. Korn Shell(ksh)
+    3.CSHELL(csh) ->4. tcsh ->5.expect 
+  
+    6.BourneAgainSHell(BASH) - GNUProject
+			|
+			|->default shell in Linux
+
+ ps
+ <or>
+ echo $0 <== current working shell
+######################################################################
+
+
+printf("Hello"); <== User
+---------------------
+
+ write(1,"Hello")
+
+ my_write_(..."Hello")			Kernel
+
+ printk(FLAG,"Hello") - load;unload
+
+ push 0x34
+ call 2343
+ hex 0432
+ ---------------------------
+  |
+ 010101 H/W
+
+###################################################################################
+
+
+Type 1 Hypervisor
+-------------------
+
+	 realhost
+	  |
+	[dom0]-->--[dom1][dom2] <== Virtual Host
+	  |   	   |	   |
+	  |	[ Hypervisor - xen ]
+	  |	  |
+	  [    H/W ]
+
+
+Type 2 Hypervisor
+--------------------
+
+		 [Guest OS - Linux]
+		  |
+		[Virtual Box]
+		  |
+	[Running Hosts - winx]
+		|
+		[ H/W ]
+
+
+#######################################################################
+
+Hypervisor- xen - micro kernel 
+		  ...............
+
+realOS		    virtual OS
+ |		   |	 |
+[dom0]		[dom1] [dom2]
+ |		  |	|
+ [Kernel]	[Hypervisor - xen]
+ |		  |
+ |________________H/W        ]
+
+
+CGI(Common GateWay Interface Appln)
+
+					
+App: [client]  [server] [ DB ] [Appln]
+-------------------------------------
+	OS
+-------------------------------------
+H/W
+		Vs
+
+/dev/sda1 <== realDisk
+ |	
+ |	/dev/xvdb1  /dev/xvdb2
+ |	|	     |		___ /dev/xvdd2
+ |     [client]   [Server]  [ DB ]
+dom0   host01     host02   host03
+----------------------------------
+ |	 |	    |       |
+ |	 [   Hypervisor ]
+ |		|
+ 		H/W
+ 
+
+IP: dom0IP - real OS
+
+nxclient/vncviewer/tigervnc => dom0IP  -> dom0
+					    |---ssh host01 (or) vncviewer host01:<port>	
+								
+
+
+dom0				host01
+|
+~/.ssh/known_hosts
+  <empty>
+
+dom0 m/c  -> ssh host01 {Enter}
+		 ....
+		 ....
+	   .ssh/known_hosts
+	   |	 |->we can see the host01 details
+	  hidden directory
+
+----------------------------------------------------
+dnf install openssh openssh-server
+
+systemctl start sshd
+systemctl enable sshd <== to start automatically while booting time
+
+ifconfig
+ip a
+ip addr
+ip address
+
+######################################################################
+
+cat /etc/hosts
+
+ - list of remote host details
+
+<IP> <FQDN>  <alias>
+
+10.20.30.40  host02.example.com	 host02
+
+hostname
+
+ping 10.20.30.40 {Enter} <or> ping host02.example.com {Enter} <or> ping host02 {Enter}
+...
+...
+
+ssh 10.20.30.40  <or> ssh host02.example.com <or> ssh host02 {enter}
+	
+File Copy from local m/c to remote m/c
+|
+scp file1 host02:<Path>
+
+
+File from remote m/c to local m/c
+scp <hostname>:File  file2
+
+Copy directory file from local m/c to remote m/c
+|
+scp -r D1 host02:/path/D2
+
+#####################################################################################
+
+Go to Host02		- Host03
+--------------
+Check working Kernel version and other details
+		uname -r	 uname -a
+
+Check OL8 version => cat /etc/oracle-release 
+
+Top 10 process list => ps -e|head 
+			|
+			PID 1
+
+Test current working shell name
+|
+|-> ps <or> echo $0
+
+mounted filesystem details (df)
+
+network details
+-------------------
+ip a
+cat /etc/hosts
+#################################################################################
+sshd.service - R+
+
+ssh-agent -> holds and manage our ssh keys
+				-------------
+				
+	
+#################################################################################
+
+
+OFF =>Switch On PC =>PowerOnSelfTest(POST)
+				|
+				MasterBootRecord
+				|
+				BootLoader
+				|
+				Kernel
+				|
+				Process
+
+1.LILO
+.......
+						
+2.GRUB - Multiboot Support
+	(ex: Linux,windows etc)
+
+
+GRUB							GRUB2 OL[789]
+-----							----------
+/boot/grub						/boot/grub
+grub.cfg file is INI file				grub.cfg file is shellscript
+ Key = Value			
+/boot/grub/grub.cfg					/boot/grub/grub2.cfg
+- by anaconda 							    |
+- root user can able edit					   grub2-mkconfig
+  modify boot parameters				we can't edit this grub2.cfg file
+							
+							To edit boot parameters
+- /boot							 -> /etc/default/grub
+								|
+- OL[56]					grub2-mkconfig -o /boot/grub2/grub.cfg
+
+							UEFI - replace BIOS
+							->Faster Boot Times
+							->GUID Partition Table(GPT)		
+					[partitionTables|bootloaders]
+								|->[loaderCode||]
+									|
+									kernel
+|
+/etc/sysconfig/modules/p1.modules		  grub2 -> insmod <kernelModule>
+			insmod <kernelModule>
+	
+=================================================================================
+
+
+BootLoader(Grub2) ---->Kernel
+		  |
+		initramfs 
+
+
+/etc/fstab
+
+
+uname -r
+-------------------------------------------------------------------------------
+initramfs internal
+ |
+ |-> Loading device drivers(storage drivers)
+ |-> detect & set the storage device
+ |-> mount the real root filesystem
+ 		...............
+
+ |-> /etc/fstab 
+	....
+
+
+systemctl reboot --firmware-setup
+
+
+# To create an initramfs file
+  ----------
+dracut -v initramfs-<KernelVersion>.img  # 
+	  ---------------------------------
+
+
+# To see iniramfs content
+lsinitrd -v initramfs-<KernelVersion>.img
+###########################################################################################
+
+dracut-initqueue - Timeouts
+
+dracut --force  # rebuild the initrad and Dracut
+|
+dracut --force /boot/initramfs-<KernelVersion>.img <KernelVersion>
+|
+grub2-mkconfig  -o /boot/grub2/grub.cfg
+-------------------------------------------------------------------------------------

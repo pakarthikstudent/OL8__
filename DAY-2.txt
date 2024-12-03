@@ -1,0 +1,718 @@
+cat ~/.ssh/id_rsa.pub|(ssh user@host "cat >> ~/.ssh/authorized_keys")
+ <or>
+ssh-copy-id -f -i id_rsa.pub user@host
+ <or>
+ssh user@host tee -a .ssh/authorized_keys < ~/.ssh/id_rsa.pub
+			
+####################################################################################
+
+Recap - Linux - Kernel ->File,Process
+
+File - Data - Under the Storage device
+|
+Process - Data - Under the CPU
+			  ------
+
+
+user: date - this is internal command <== user view
+	|
+	command  - /bin/date <== shell view
+	|
+	----------
+	/bin/date <== File & Process <== Kernel View
+
+stat /bin/date - info about /bin/date file 
+|
+/bin/date - execution //process
+			 |->PID,PAddress,Pstate ... //PCB
+					  |->exit
+
+OFF ->Switch ON PC -> POST ->MBR ->Bootloader ->Kernel ->Process(systemd) ...(?)
+								|->getty(?) <or>login(?)
+								    |
+								 Login:___ password:___
+								    |
+								   SHELL(CLI) Vs Desktop(GUI)
+								    |
+								  user IO <== user process
+Linux _ Process
+	
+ User process			|		System Process
+ -------------------------------|----------------------------------
+ -> by user			|	-> by systemd (PID:1)
+ |					|	
+ -> TTY:pts/port			-> TTY: ? <== not created by IO devices
+ |					|
+ -> After Successful login		-> Before shell will start - all system
+    shell will start then		   processes are started
+    user process started		|
+ |					-> session leader(SID)
+ -> user process parent is
+    working shell(or) running shell
+ |
+ -> Start ->R+ =>EXIT
+	    ||
+	    stop
+
+
+p1(101) p2(102) p3(103) p4(104) p5(105) p6(106) p7(107) p8(108) p9(109) p10(p110)
+
+p1 p2 p3        p4 p5       p6     p7 p8 p9 p10
+--------        -----       --     -------------
+PGID:101        PGID:104    PGID:106  PGID:107
+
+p1 p4 p6 p7 <==(SID)
+------------
+SID:101
+
+PID PPID
+102  101
+..
+102   1    <== 102 is an orphan process
+
+
+P1(101 - parent) <== killed 
+|			
+P2(102 - Child) - Running  -- systemd will care of this P2 process (PPID:1)
+
+
+P1 (101 - parent) - Wait   --<---------
+|				       | SIGCHLD (exit signal) - kill -l 
+P2(102 - Child ..... Running -->Exit->-
+
+
+P1 (101 - parent) - Wait  
+|				       //blocked- SIGCHLD (exit signal) - kill -l 
+P2(102 - Child ..... Running -->Exit->-
+----------------------------------------------//Zombie 
+
+Z .... [processName]<defunct>
+		     ------
+			|->
+
+To identify the zombie 
+-------------------------
+1) ps -l |grep "Z"  (or) ps aux | grep defunct (or) top 
+
+Handling Zombie process
+-------------------------
+1. wait() <or> waitpid() 
+2. kill a parent process 
+3. reboot (rare cases) 
+
+##############################################################
+
+cgroup - ControlGroup - Kernel Subsystem (resource allocator)
+		|
+		|->Container env 
+
+
+	 [web] [DB] [App1] [App2] ..[AppN]
+	+----------------------------------+
+		Kernel
+	+----------------------------------+
+
+			Vs
+	 [web]	  [DB]      [App1]
+	-----------------------------------
+	 [ LXC ]  [ LXC ]   [LXC] <= Linux container 
+	  ---------------------//cgroup 
+		 Kernel
+		
+systemd - PID:1
+
+
+root@host~]# MySQL -u root -p ...{Enter} <= User process ; mysqld.service(R+) <=systemprocess				
+..
+MySQL> ...
+
+
+root@host~]# ssh host02{Enter} <== User Process - sshd.service(R+) <=== SystemProcess
+...
+root@host02~]#
+
+--------------------------------------------
+/bin/fileA <== under /bin directory - binary file - execution file - not readable 
+	|								
+	|
+    /etc/fileA.conf  - this is configuration file - ASCII/TEXT - readable content
+	 |
+	 Value	
+
+root@host~]# /bin/fileA --config /etc/fileA.conf {Enter}
+.... Running
+press Ctrl+C - Exit state (fileA execution is terminated)
+
+	fileA.service - INI format of config file  (KEY = Value)
+	|
+	[Unit]
+	
+	[Service]
+	ExecStart=/bin/fileA --config /etc/fileA.conf
+	[Install]
+	.....
+	 |->reload the daemon 
+
+systemctl {Enter}
+systemctl -t service {Enter} 
+
+systemctl status <filename>.service (or) systemctl status filename 
+
+systemctl status sshd.service (or) systemctl status sshd //any user can run.
+
+systemctl start sshd.service 
+systemctl restart sshd.service
+systemctl stop sshd.service
+-------------------------------//root user only can do.
+
+	OL[789]		   OL[56]
+systemctl get-default  => runlevel 
+
+
+To change graphical ->multi-user
+systemctl isolate multi-user.target
+
+To change multiuser ->graphical	
+systemctl isolate graphical.target
+
+
+
+fileA.service - R+
+
+systemctl stop fileA.service  - stopped
+
+vi /etc/fileA.conf
+...
+:wq
+
+systemctl restart fileA.service - started Vs systemctl try-restart fileA.service - won't start
+
+
+
+fileA.service - R+
+vi /etc/fileA.conf
+...
+:wq
+systemctl try-restart fileA.service - started 
+
+systemctl enable fileA.service  ]  
+systemctl start fileA.service   ]    => systemctl enable --now fileA.service 
+systemctl status fileA.service		|_ systemctl status fileA.service 
+					 
+################################################################################
+
+systemctl
+sysetmctl get-default
+systemctl {start|stop|restart|status} filename.service
+|
+systemctl enable filename.service
+	  disable filename.service
+
+################################################################################
+How to create own custome service file 
+(or) 
+execute my script/file automatically during os loading time 
+(or) 
+convert user process to system process
+        ............    ..................
+	 |			|
+	pts/<port>		?
+	parent:workingShell     parent is: system
+
+/etc/systemd/system/filename.service	 <== STEP 1
+			|
+			[Unit]
+
+			[Service]
+
+			[Install]
+
+	
+  [Unit]
+  Description = Write Own description
+  
+  [Service]
+  ExecStart = <executionFile> 
+
+  [Install]
+  WantedBy = multi-user.target
+
+  reload the daemon 
+  -------------------
+  systemctl daemon-reload <== STEP 2
+
+  To start automatically   <== STEP 3
+  -----------------------
+  systemctl enable filename.service  Vs systemctl enable --now filename.service
+  |					 |
+  systemctl start filename.service       systemctl status filename.service
+  |
+  systemctl status filename.service
+ 
+  #################################################################################
+
+
+
+systemctl start sshd.service 
+
+service sshd start - sysV init //OL[789] support this sysV
+	 |_____|
+
+############################################################################################
+file: pt.sh
+------------
+[root@node1 ~]# cat pt.sh
+#!/usr/bin/bash
+
+while :
+do
+        uptime >>/var/log/LB.log
+        sleep 4
+done
+[root@node1 ~]# chmod a+x pt.sh
+[root@node1 ~]# ls -l pt.sh
+|
+|
+# create a config file /etc/systemd/system/ab.service
+
+# service file -> /etc/systemd/system/filename.service
+			
+vi /etc/systemd/system/ab.service
+[Unit]
+Description=About myCPU LoadBalance
+[Service]
+ExecStart=/usr/bin/bash /root/pt.sh
+[Install]
+WantedBy=multi-user.target
+:wq
+[root@node1 ~]#
+
+# reload a daemon
+systemctl daemon-reload 
+
+# To start automatically while os loading time
+systemctl enable ab.service
+
+# To start now
+systemctl start ab.service
+
+# To check the status
+systemctl status ab.service
+
+-----------------------------------------------------
+
+ntpq -p # show the list of ntp servers
+
+[remote]  [refid]  st ... delay offset 
+0.				   |->difference btn systemClock and NTPserver - milliseconds
+1.pool.ntf.org ..         0.123
+			   |-->your system and ntp server -milliseconds
+
+ntpdate -q 1.pool.ntf.org {Enter} <== manual query
+	
+ startum 3,offset ... 
+|
+|
+chronyc tracking # synchronization status
+
+ 
+Last Offset -> the time difference between our system time and NTP server time
+
+	(T2 - T1) + (T3 - T4) ... +(Tn - Tm) /N 
+	
+	(T2 - T1) + (T3 - T4) / 2
+
+Delay / latency: msg passed from client <-->server
+				 -------------------
+	(T4 - T1) - (T3 - T2)         
+
+
+RMS ->average timeset
+
+
+
+###########################################################################
+at ->single job
+
+|->atd.service
+
+cron ->crond.service
+
+|->/etc/crontab
+
+
+10th June 8:30 AM backup.sh 
+
+30 08 10 jun  * user-name /home/user-name/backup.sh
+	  06
+
+10th June 8:30 AM and 4:30PM backup.sh 
+
+30,30 08,16 10 jun  * user-name /home/user-name/backup.sh
+	       06
+
+10th June from 8:30 AM to 4:30PM backup.sh 
+30-30 08-16 10 jun  * user-name /home/user-name/backup.sh
+	       06
+
+*
+,
+-
+/ <= step value
+
+*/2  <== every 2mts
+* */2 <== every 2hrs
+
+@hourly
+@weekly
+@monthly
+@yearly 
+@reboot 
+
+00 14 * * * * * p.sh
+   |
+  m/c - poweroff
+
+14:01
+anacron --> /etc/anacrontab
+			|->		
+
+
+tar -cvf cron_backup.tar /etc/crontab /etc/cron.d/ /etc/cron.daily/ 
+	  ...........
+
+
+##################################################################################
+
+Linux Kernel Module
+----------------------
+
+Developer => Kernel object file => filename.ko
+				   =============
+
+Admin => module (Kernel object file => filename.ko)
+ |
+ |-> load;unload;module info;module depends 
+	
+	----------------------------
+	 Filesystem <-> PCB
+	 |		 
+	 DD <== kernel modules
+	  | 
+	  DC
+	----------------------------
+		NIC
+		 |-------------------------------------ExternalNetwork
+
+User: nfs-server -> yum install nfs-utils* - package management Command
+
+			nfs-server.service 
+				
+Kernel: nfs.ko <== loaded ; unloaded 
+	-------
+	 |->nfs module 
+
+
+
+  DD        DD  - driver code (kernel object / module)
+   |        |					 |----- load;unload
+ --------------------
+ HardDisk ; microphone
+
+
+
+
+Developer => Kernel object file => filename.ko
+|					|
+|				/home/userA/project/f1.ko
+|                               /home/userA/project/f2.ko
+|
+|
+|___   insmod /home/userA/project/f1.ko 
+
+       lsmod|grep f1
+	
+	 insmod /home/userA/project/f1.ko 
+	 insmod /home/userA/project/f2.ko
+
+	lsmod|grep f2  
+	f2 ... f1 (depends on)
+
+    
+Admin => module (Kernel object file => filename.ko)
+|
+|
+|___ modprobe f1  <== load the kernel module - There is no .ko extension
+	      ==
+
+
+ |___ modprobe f2
+
+      modprobe -v f2
+       insmod /home/userA/project/f1.ko 
+       insmod /home/userA/project/f2.ko
+
+     modprobe -r f2
+	
+     modprobe -rv f2
+     rmmod f2
+
+modprobe --show-depends bluetooth
+
+[root@node1 ~]# modprobe --show-depends bluetooth
+insmod /lib/modules/4.18.0-513.5.1.el8_9.x86_64/kernel/net/rfkill/rfkill.ko.xz
+insmod /lib/modules/4.18.0-513.5.1.el8_9.x86_64/kernel/crypto/ecdh_generic.ko.xz
+insmod /lib/modules/4.18.0-513.5.1.el8_9.x86_64/kernel/net/bluetooth/bluetooth.ko.xz
+
+
+[root@node1 ~]#
+[root@node1 ~]# lsmod|grep bluetooth
+[root@node1 ~]#
+[root@node1 ~]# modprobe bluetooth
+[root@node1 ~]# lsmod|grep bluetooth
+bluetooth             724992  0
+ecdh_generic           28672  1 bluetooth
+rfkill                 32768  4 bluetooth
+[root@node1 ~]# modprobe -r bluetooth
+[root@node1 ~]#
+[root@node1 ~]# lsmod|grep bluetooth
+[root@node1 ~]#
+
+[root@node1 ~]#
+[root@node1 ~]# lsmod|grep bluetooth
+[root@node1 ~]#
+[root@node1 ~]# modprobe bluetooth
+[root@node1 ~]# lsmod|grep bluetooth
+bluetooth             724992  0
+ecdh_generic           28672  1 bluetooth
+rfkill                 32768  4 bluetooth
+[root@node1 ~]# modprobe -r bluetooth
+[root@node1 ~]#
+[root@node1 ~]# lsmod|grep bluetooth
+[root@node1 ~]#
+[root@node1 ~]# modprobe -v bluetooth
+insmod /lib/modules/4.18.0-513.5.1.el8_9.x86_64/kernel/crypto/ecdh_generic.ko.xz
+insmod /lib/modules/4.18.0-513.5.1.el8_9.x86_64/kernel/net/bluetooth/bluetooth.ko.xz
+[root@node1 ~]#
+[root@node1 ~]# modprobe -rv bluetooth
+rmmod bluetooth
+rmmod ecdh_generic
+[root@node1 ~]#
+
+##
+
+grep -w btrfs.ko.xz /lib/modules/`uname -r`/modules.dep 
+---------------------------------------------------------
+ | 
+ |---> same as => modprobe --show-depends btrfs
+
+##  Activity - 8.1
+###############################
+
+/proc <== user view
+|
+proc  <== filesystem (Kernel)
+|
+CPU RAM <== H/w
+
+ls /proc {Enter}
+1    <==  process PID 
+2    <==  process PID
+33   <==  process PID
+       ----------------//display as directory format
+uptime
+
+cat /proc/<filename>
+		|
+		current information - active state of kernel info
+
+cat /proc/filesystems
+		|
+		list of available filesystem in my working kernel 
+			(memory,cgroups,storage,network,....)
+
+df - commandline utility 
+|
+|--getting information from /proc/filesystems
+		
+
+lsmod - commandline utility 
+-------
+ |->list of loaded kernel module
+ |
+ |-->getting info from /proc/mounts
+
+cgroup
+|
+file.service - map to execution file(binary file)
+
+file.slice - blueprint of process
+ 
+ - user slice 
+	|->userA userB userC	root
+	   1000  1001  1002	 |__ 0
+	   |	  |	|
+ - system slice
+	|->all service <-- systemctl -t service
+
+ - machine slice
+
+systemd-cgls
+
+[root@node1 ~]# cat /proc/sys/kernel/hostname
+node1
+[root@node1 ~]#
+[root@node1 ~]# # echo "abc" >/proc/sys/kernel/hostname  -- (1) way
+[root@node1 ~]#
+[root@node1 ~]# sysctl -w kernel.hostname="xyz"  ## --(2) way
+kernel.hostname = xyz
+[root@node1 ~]# hostname
+xyz
+[root@node1 ~]# sysctl -w kernel.hostname="node1"  ## --(2) way
+kernel.hostname = node1
+[root@node1 ~]#
+[root@node1 ~]# # sysctl -w dir1.dir2.dir3.file=value
+[root@node1 ~]# #           -------------------
+[root@node1 ~]# #           /proc/sys/dir1/dir2/dir3/file
+
+
+[root@node1 ~]# # sysctl -w dir1.dir2.dir3.file=value
+[root@node1 ~]# #           -------------------
+[root@node1 ~]# #           /proc/sys/dir1/dir2/dir3/file
+[root@node1 ~]# clear
+[root@node1 ~]# sysctl -a
+abi.vsyscall32 = 1
+
+[root@node1 ~]# # net.ipv6.neigh.virbr0.retrans_time_ms = 1000
+[root@node1 ~]# #
+[root@node1 ~]# cat /proc/sys/net/ipv6/neigh/virbr0/retrans_time_ms
+1000
+[root@node1 ~]#
+######################################################################
+
+udev
+ |----->Linux device manager 
+	--------------------
+	 |-> that manages device nodes 
+	 |-> /dev directory
+		...
+		...
+		
+		/dev/<filename>
+ 
+ |-> Rules for device
+	|
+	|->determine how to name (or) handle devices
+	|->/etc/udev/rules.d/
+	    <or>
+	   /lib/udev/rules.d/
+	
+	|-> rules define based on attributes(device Type;ID;model etc.,)
+	
+	enp0s0 ->eth0
+	======   ------
+	  |-------->
+
+In Linux everything is file and process
+	-------------
+	(including devices)
+
+ex: keyboard,hard disk
+	|	|_______ block type device(storage)
+	|
+	characterType device
+
+ls /dev/tty   ls /dev/sda  ls /dev/xvda /dev/xvda1
+  ^^^^^^^^^^^    ^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^^
+ 
+ - when a device is connected to the system
+   udev automatically creates the device file under /dev  [rules are applied]
+   then kernel -> can interact with device
+
+	
+udevadm - commandline tool
+/etc/udev/rules.d/ - user defined udev rules 
+
+#############################################################################
+package management
+
+rpm -ivh <packageName>-<version>-<release>.arch.rpm 
+    ====	
+
+rpm -ivh ansible.... rpm
+	 |
+	 |-dependson python package
+			|
+			|->not exists ? ->ansible installation is failed
+
+rpm -ivh pkA-version-release.x86.rpm
+	   |
+	   |_ depends on pkB
+			  |pkC
+			    |pkD
+				..
+
+[root@node1 ~]# # rpm -qa # list of already installed packages
+[root@node1 ~]#
+[root@node1 ~]# # rpm -qa|grep <mypackageName>
+[root@node1 ~]#
+[root@node1 ~]# # rpm -q <mypackageName>
+[root@node1 ~]#
+[root@node1 ~]# rpm -qa|grep nfs
+libnfsidmap-2.3.3-59.el8.x86_64
+sssd-nfs-idmap-2.9.1-2.0.1.el8.x86_64
+nfs-utils-2.3.3-59.el8.x86_64
+[root@node1 ~]#
+[root@node1 ~]# rpm -q nfs
+package nfs is not installed
+[root@node1 ~]#
+[root@node1 ~]# rpm -q nfs-utils
+nfs-utils-2.3.3-59.el8.x86_64
+[root@node1 ~]#
+[root@node1 ~]# rpm -q python3
+package python3 is not installed
+[root@node1 ~]# python3
+Python 3.6.8 (default, Nov 16 2023, 04:13:44)
+[GCC 8.5.0 20210514 (Red Hat 8.5.0-20.0.1)] on linux
+Type "help", "copyright", "credits" or "license" for more information.
+>>> exit()
+[root@node1 ~]# rpm -qa|grep python3
+python3-gobject-base-3.28.3-2.el8.x86_64
+python3-dasbus-1.2-2.el8.noarch
+python3-gobject-3.28.3-2.el8.x86_64
+python3-libcomps-0.1.18-1.el8.x86_64
+python3-magic-5.33-25.el8.noarch
+python3-hwdata-2.3.6-3.el8.noarch
+python3-ntplib-0.3.3-10.el8.noarch
+python3-pytz-2017.2-11.el8.noarch
+python3-tracer-0.7.5-2.el8.noarch
+python3-cffi-1.11.5-6.el8.x86_64
+python3-dmidecode-3.12.3-2.el8.x86_64
+python3-six-1.11.0-8.el8.noarch
+python3-dbus-1.2.4-15.el8.x86_64
+python3-cups-1.9.72-21.el8.x86_64
+python3-setuptools-39.2.0-7.el8.noarch
+python3-perf-4.18.0-513.5.1.el8_9.x86_64
+python3-kickstart-3.16.16-1.0.1.el8.noarch
+
+			
+########################
+		
+iso.img
+ |----->mount this iso.img -> /mnt/OL8/
+				
+ls /mnt/OL8/Packages
+		|->list of rpm files
+
+#################################################################################
+
+
+
+
+
+
+
+
+
+
+
