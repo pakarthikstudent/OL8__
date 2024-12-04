@@ -1,0 +1,364 @@
+rpm -ivh <packageName>-version-release.arch.rpm
+          =====================================
+
+yum utility
+---
+
+root@host~]# pwd
+/root
+
+root@host~]# ls {Enter}
+<empty directory>
+
+root@host~]# rpm -ivh /root/Downloads/<package>-version-relese.arch.rpm
+		Vs
+
+root@host~]# yum install <packageName>
+y/d/n 		 remove
+		 update
+
+/etc/yum.repo.d/public-yum-ol<version>.repo
+[repoID]
+name=
+baseurl=https://yum.oracle.com/....
+enabled=1 - connect to URL Vs enabled=0 - not connect to URL
+gpgcheck=1
+
+yum install python3  Vs  dnf install python3
+			 dnf module install python3.11
+			 dnf module install MySQL.3.6/client
+
+
+yum list  ->dnf list
+yum repolist -> dnf repolist
+
+
+1st install nfs utitlity => dnf install nfs-utils {enter}
+|
+2nd start a server -> systemctl start nfs-server.service 
+|
+-------------------------------------------------------------
+Kernel level => modprobe nfs <== loading nfs server to kernel 
+	        --------
+
+local repository 
+-----------------
+
+disable public repository
+|
+vi /etc/yum.repo.d/public-yum..repo {enter}
+enabled=1 -> enabled=0
+:wq
+
+OracleLinux.iso ==> /mnt/OracleLinuxISO/Packages/
+					 |->list of rpm files.
+
+
+step 1: Go to mount point  cd /mnt (or) cd /media 
+
+step 2: using createrepo command create a repository
+	      ----------		
+	createrepo -v .  # 5000+packages
+
+step 3: check your directory -> ls
+	repodata/
+	      |--->list of rpm files - meta data format
+
+	/mnt/
+step 4: copy GPG-KEY (or) GPG-Oracle-KEY from /mnt/OracleLinuxISO/
+	to local directory
+
+step 5: import --rpg-gpgkey
+|
+step 6: Go to /etc/yum.repo.d/ 
+	cd /etc/yum.repo.d/
+	vi myfile.repo{Enter}
+	[myID]
+	name=mylocalrepo
+	baseurl=file:///mnt
+	enabled=1
+	gpgkey=/mnt/GPG-KEY
+	gpg_check=1
+	:wq
+|
+step 7: yum clean all
+|
+step 8: yum repolist
+	mylocalrepo .... 5000	
+-------------------------------------
+yum install zsh {Enter}
+				
+
+#####################################################################
+
+Debian Linux - Ubuntu ; Linux mint 
+------------
+	|->apt install <packageName>
+	|->apt-get install <packageName>
+#####################################################################
+Configuration Management - like Ansible
++--------+
+| node   | ------------[Client1-OL7]
+|	 | ------------[Client2-Ubuntu]
+|	 |-------------[Client3-Winx]
++--------+
+ yum -----------Client1 - OL7
+ apt -----------Client2 - Ubuntu
+ Winx ----------Client3 - Winx
+
+
+  [Bank server - Oracle Linux]
+   |		 |__ <update> - ondisk
+  Appln.. |
+	 restart -- down state
+
+	Vs
+	
+  [Bank server - Oracle Linux]
+   |		 |__ <update> - in memory 
+  Appln.. |
+
+
+##############################################################
+https://docs.oracle.com/en/operating-systems/oracle-linux/ksplice-user/ksplice-AbouttheAPIImplementation.html#ol_get_machines
+
+https://docs.oracle.com/en/operating-systems/oracle-linux/6/admin/admin-ksplice-aboutupclient.html
+=============================================================
+		
+User Group Administration
+--------------------------
+ /etc/passwd
+ /etc/shadow
+
+ /etc/passwd - user name,user ID,login path,login shell etc., 
+ ------------
+     |<-- any user(root and non-root) can able to read
+ 
+ user
+ -----
+   |->login user => root - UID ->0  /root
+		    non-root ------>userA userB ... /home/userA ; /home/userB
+
+   |->system user
+		   package1 
+			|---->/bin/pk1
+			|---->/etc/pk1.confg
+			|---->/var/log/pk1.log
+			       ----------------
+				
+ useradd kumar		-> /home/kumar ->login user
+ 							
+ useradd pk1 (not a login user)
+	 =====
+	   |------> chown pk1 /bin/pk1
+		    chown pk1 /etc/pk1.conf
+		    chown pk1 /var/log/pk1.log
+
+
+	/etc/shadow <-- root user only can able to read
+	------------
+	  |->password encryption details
+	  |->password aging info
+
+useradd
+usermod
+userdel
+
+	/etc/login.defs 
+	-----------------
+
+in OracleLinux ->non-root userID will start from 1000
+						  ?
+
+File(F)
+---------
+	|-> 3 by users( user <or> author  u )
+		      ( group g  )
+		      ( others o )
+
+read -r 		rwx rwx rwx
+write -w		rw- r-- r--
+execute -x
+
+		r	w	x
+		1	1	1  => 7
+		1	1       0  => 6
+		1	0	1  => 5
+		1	0	0  => 4
+		0	0	0  => 0
+
+directory -> 7 7 7		7  7  7
+	     0 2 2 (-)		0  0  2
+	    -------		--------
+	     7 5 5 		7  7  5
+	 rwxr-xr-x		rwxrwxr-x
+
+regular file -> 6 6 6		6 6 6
+		0 2 2 (-)	0 0 2 (-)
+		--------	---------
+		6 4 4 		6 6 4
+		-------		--------
+rw-r--r--				rw-rw-r--
+
+=========================================================================
+
+/etc/profile <== shell script file
+
+
+login as:<userName>
+password:		login(?)
+|		
+|
+shell will read and execute /etc/profile
+|
+userName@host~]$ 
+
+#########################################################################################
+
+root@host~]# vi /etc/profile		login as:userA
+					password:
+export PORT=5000			userA@host~]$ echo $PORT ->5000
+
+					login as:userB
+					password:
+					userB@host~]$ echo $PORT ->5000
+root@host~]# echo $PORT ->5000
+
+root@host~]# ls -a {Enter}
+
+.bashrc .bash_history .<filename>
+		      |___________Hidden file
+
+root@host~]# vi .bashrc			userB@host~]$ vi .bashrc {Enter}
+export PORT=4590			export PORT=8080
+:wq					:Wq
+					|
+|					userB ->echo $PORT ->8080
+login as root -> echo $PORT ->4590
+
+#####################################################################################
+
+su  Vs  sudo
+
+
+userA@host~]$ whoami
+userA
+
+userA@host~]$ su - {Enter} # Switch to root user
+password: <root user password>
+
+root@host~]# whoami
+root
+root@host~]# systemctl start atd.service -->recorded to /root/.bash_history file
+root@host~]# exit
+|
+userA@host~]$
+
+
+userA@host~]$ sudo systemctl start apt.service
+		   ----------------------------//recorded to /home/userA/.bash_history file
+		
+sudo <admin-command>
+|
+ask enter sudo password -- same as user login passwd
+			   |
+			test this user is sudo user or not
+						|	|->security mail goes to root user
+						OK
+security mail
+--------------- which user is entered ?
+		command path /sbin/
+		terminal port number pts/<portNumber>
+		login shell
+		date/time
+		----------------------------//send to root user
+
+root@host~]# visudo
+...
+...
+########################################################################################
+
+userA  userB	userC  
+---------------------------//Knows root user password
+
+root -> userA 
+	
+	userA@host~]$ su - {Enter}
+	root@host~]# .................. There is no password prompt
+
+	userB@host~]$ su - {Enter}
+	Permission denied 
+	userB@host~]$ 
+
+	userC@host~]$ su - {Enter}
+	password: <Enter root password>
+	|
+	root@host~]#
+
+PAM
+----
+
+[Auth]  CtrlFlag  [PAM Module] [args]
+		   ----------
+	|		|->/lib64/security/pam_....so
+	|					...
+	|
+	requisite
+	required
+	sufficient
+	
+/etc/pam.d/
+	   applications
+
+##################################################################################
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 	  
+
+
+
+
+
+
+
+
+
+
+
