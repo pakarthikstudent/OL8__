@@ -1,0 +1,6 @@
+https://sgbdbrasil.wordpress.com/2021/10/23/upgrade-oracle-linux-7-to-oracle-linux-8/
+
+
+https://kc.jetpatch.com/hc/en-us/articles/29001772840333-In-place-upgradation-of-centos-7-x-to-Oracle-linux-8-x
+
+https://dev.to/project42/upgrading-oracle-linux-7-to-8-with-leapp-18dh
