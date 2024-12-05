@@ -1,0 +1,514 @@
+Linux - File, Process
+        ------------
+
+
+File - Data
+|
+File directory structure
+
+		/
+		|
+-----------------------------------
+|	|	|	|	.. |
+
+
+File Types
+------------
+	1. Regular File <or> Ordinary File
+		|->ASCII/TEXT - user can able to read/understand 
+		|->ELF - user can't able to read/understand(ex: commands)
+	2. Directory
+	3. link file <or> softlink file <or> symbolic link  ln -s <source> <target>
+	4. device file
+		|-->Character type device - (ex: keyboard,printer)
+		|-->Block type device - (ex:Storage devices - HDD ,SD,USB,CDROM)
+
+	5. named pipe <or> FIFO  - process communication
+	6. Socket file
+
+	file <filename> - determine the file type
+	 <or>
+	stat <filename> - file details
+
+File system
+------------
+	- Linux internals - data structure 
+	- Knows how to organize the data 
+	- where the data is located in storage device
+	- metadata 
+	
+	cat /proc/filesystems 
+
+
+	---------------------------------------------------
+			[systemcall]
+			|
+		[File system ] <--> PCB
+			|
+			[DD]
+			 |
+			[DC]
+			|
+	-----------------------------------------------------------
+		
+
+	--------------------------------------
+	proc  	xfs	ntfs	iso9660 ...    <== VFS
+	---------------------------------------
+		|
+		DD
+		|
+		DC
+		|
+	--------------------
+		H/W
+
+ext ->ext2 ->ext3 ->ext4  ->xfs
+		     |	     |
+		   OL[56]    OL[789]
+
+Logical view of filesystem
+--------------------------
+1.boot block
+2.super block
+3.inode block
+4.data block
+
+bootblock - bootloader info
+
+
+superblock - stores the overall filesystem layout in the disk
+	   - it starts at an offset 2048
+	   - block size,block count,inode details
+	   - descriptors
+		|->block bitmap,inode entry details
+
+inode - index node
+	metadata - info about data
+		    |
+		   disk sector ;timestamps;size etc.,
+
+datablock - logdetails
+	    chunk size
+
+
+user view
+----------
+	|->root@host~]# cat p1.log
+			hello
+	   root@host~]# cat /var/log/p1.log
+			process details
+	
+	   root@host~]# cat pop.log ->No Such file
+
+	   root@host~]# /etc/passwd ->Permission denied
+
+	   root@host~]# cp p1.c p2.c		| ->open()|FileSystem
+							  |->filesystemType(xfs)					
+			cp p1.c /D1/p2.c
+						|->same filesystem type(disk)
+
+			cp /mnt/CDROM/p1.java ~/
+			   ----------------   ===
+				|-->iso9660   |-->xfs
+
+			scp p1.c host02:/root
+			---  ---  -----  ---------
+			      |->xfs  |->nfs   |->ext/xfs
+
+
++---------+-------------+-------------+----------+
+|bootblock| super block | ... inode   | datablock|
++------------------------------------------------+
+
+ p1.txt 1000	------------> | 1000:<metadata>|
+ p2.txt 1001  ---------------------------->| 1001:<metadata>|
+ p3.txt 1002 ------------------------------------------>|1002:<metadata>|
+ |	 |_inode
+filename
+
+ ls -i
+
+
+user: newFile		  <newFile>
+kernel: <int>		n   ?
+
+		filedescriptor	---> fileTable(Global Kernel data structure)
+				
+cat p1.txt	FD = 3 ------------->+-----------------------------+
+cat p1.txt	FD = 4		     | permission  FD,UID,mode ... |
+cat p2.txt	FD = 5		     |  |
+cat pop.log	FD = -1		     | reference Count:1+1=2
+				     |  |
+		    		     | *vptr --->inode
+				     +-----------------------------+
+
+vi p1
+Hello <== plain text data
+
+|
+-----
+filesystem: disksector_start:.. disksector_end:...
+	    inode
+	    partition
+	    permission
+		....
+	 -------------------------------------//metadata - filesystem understanding format
+|
+HD: 0101 <-- rawdata
+
+#####################################################################################
+
+1. attach a storage device	=> /dev/sda /dev/sdb /dev/sdc  <== named device(scsi type)
+				   /dev/hda /dev/hdb /dev/hdc  <== named device(IDE type)
+				   /dev/xvda /dev/xvdb <== virtual devices
+
+How to view list of attached storage devices?
+
+cat /proc/partitions
+   <or>
+lsblk
+   <or>
+  parted -l
+   <or>
+  fdisk -l
+-------------------------------------------
+
+2. create a partition using partition tools
+		|	     --------------- fdisk,cfdisk,parted,gparted 
+		divide a disk into multiple independent block
+	
+3. create a filesystem (use: mkfs.<filesystemType> <partition>
+		          <or> mkfs -t <filesystemType> <partition>)
+
+4. create a mount point (directory) mkdir <directory>
+|
+5. mount a partition device to kernel 	-> mount <paritition> <directory>
+	   ................
+		filesystem
+
+6. df -Th <== mounted filesystem details
+
+# for auto mounting - update this partition details to /etc/fstab
+
+7. vi /etc/fstab
+
+<partition>  <mountpoint> <filesystemType> 0 0
+ <or>		
+UUID
+  <or>
+LABEL=""
+
+umount <partition> (or) umount <mountpoint>
+|
+mount -a
+##################################################################################
+blkid
+e2lablel
+
+
+
+/dev/xvdb
+
+/dev/xvdb1	
+/dev/xvdb2
+
+/proc <== user view
+|
+proc <=== filesystem (Kernel)
+|
+CPU <== H/w
+
+###############################################################################
+
+	/ <-- root directory - like a mycomputer
+	|
+
+	mycomputer
+	C  D E <== user interface directory
+	|  | |
+	|  FAT32  <== filesystem Type
+	ntfs
+	
+############################################################################################
+
+Text Book
+
+	|  Contents | PageNo
+	|-----------|--------
+	| AboutLinux|  1
+	|-----------|-----
+	| File      |  23
+	|-----------|-----
+	| process   |  65
+	|-----------|-----
+	| memory    |  124
+	|-----------|------
+	 |		|__inodeNumber
+	fileName
+
+			23------------64
+			   info(data)
+				 |
+				 under storage device
+########################################################################################
+
+multipath -ll
+
+iscsiadm -m session 
+
+lsscsi
+ 
+dmesg 
+
+#######################################################################################
+/dev/null 
+/dev/zero
+
+/dev/null - cleanup task
+
+ls -lh p1.log
+    |
+    15KB <== p1.log file size
+
+cp /dev/null p1.log
+
+ls -lh p1.log
+    |
+    0 <== empty file
+
+ping -c 5 google.com ->o/p display to monitor
+
+ping -c 5 google.com >r1.log ->o/p writing to r1.log (extended to storage)
+
+ping -c 5 google.com >/dev/null 
+		      =========
+			there is no command results to monitor
+			there is no extended to storage 
+
+/dev/zero - increase file storage
+---------	
+cp /dev/zero p1
+..
+press Ctrl+C 
+
+dd 
+---
+dd if=<inputFile> of=<outputFile>
+
+dd if=/dev/xvdb1 of=boot.img
+      ==========    ------------
+
+dd if=boot.img  of=/dev/xvdb1
+
+
+dd if=/dev/zero  of=file1    bs=1024 count=100
+      ---------	    -------
+#################################################################################
+
+parted - 
+
+
+mkpart {enter}
+Filesystem type 
+start 1 
+end   10%
+print
+resizepart
+Enter a partition number? 1
+End? 15% 
+
+######################################################################################
+
+12.1 to 12.3 - standard partition
+		ID 83
+
+LVM
+----
+ |->Logical Volume Management 
+ |
+ |->Allows to create,resize,delete logical volume dynamically.
+ |					 /D1	/D2
+ 					--------------------------
+ Physical Volume			    |
+ Volume Group				    [FileSystem]           2GB   1GB   6GB
+ Logical Volume				 -----------------------   |     |     |
+					 |  Logical Volume      |[Lv1] [Lv2] [Lv3]
+   /D1		/D2			 ------------------------
+ +--|-----------|--------+		 |   volume group       | (5+10 = 15GB) 
+    |		|			 ------------------------
+   [ext4]     [xfs]		Vs	 |	physical volume |
+    |		|			 ------------------------
+ +--------------------+			+-------------------------+
+  /dev/xvdb1 /dev/xvdb2			    /dev/xvdd1  /dev/xvdd2
+	5G	  10G				5GB	  10GB
+					
+mkfs.ext4 /dev/xvdb1		mkfs.ext4 /dev/mapper/VolumeGroupName-LogicalVolumeName
+mkdir /D1					 (or)
+mount /dev/xvdb1 /D1		mkfs.ext4 /dev/VolumeGroupName/LogicalVolumeName
+
+mkfs.xfs /dev/xvdb2		mkdir /D3	
+mkdir /D2			mount /dev/mapper/VolumeGroupName-LogicalVolumeName
+mount /dev/xvdb2 /D2			(or)
+				mount /dev/VolumeGroupName/LogicalVolumeName
+				
+				blkid {Enter}
+				
+
+				Lv1 Lv2 .. Lvn
+				----------------------
+				VolumeGroup  - 15GB + 30GB => 45GB
+				-----------------------
+				physical Volume 
+				--------------------------
+				+++++++++++++++++++++++++++++++++++
+				 /dev/xvdb1  /dev/xvdb2  /dev/xvdc1
+				   5GB		10GB	   30GB|
+							       |
+							Attach 30GB to an existing disk
+				we can do ->volume group extend
+				
+					vgextend <volumeGroup> /dev/xvdc1
+				
+
+
+1st step -> create a disk partition - partition ID 8e
+						   ===
+2nd step -> create a physical volume - pvcreate <paritition>
+|
+3rd step -> create a volume group - vgcreate <groupName>
+|
+4th step -> create a logical Volume -> lgcreate 
+|
+5th step -> create a filesystem -> mkfs.<fstype> <volumeGroup>/<logicalVolumeName>
+|
+6th step -> update this entry into /etc/fstab
+
+######################################################
+LVM Activity
+------------
+fdisk /dev/xvdd{Enter}
+
+n
+Enter
++1G
+p
+t <===
+Partition number(1,2,default 2):<press-Enter>
+			       :8e <press-Enter>
+t <===
+Partition number(1,2,default 2):1 {Enter}
+			       :8e <press-Enter>
+p
+...
+		8e
+		8e
+w {Enter}
+------------------------
+fdisk -l |grep 8e  
+
+/dev/xvdd1 ... 8e  LVM
+/dev/xvdd2 ... 8e  LVM
+
+dnf install lvm2*
+|
+Check LVM version =>  lvm version 
+|
+
+pvs
+pvdisplay
+|
+pvcreate -v /dev/xvdd1 /dev/xvdd2
+
+pvs
+pvdisplay
+|
+vgs 
+vgdisplay 
+|
+vgcreate -v <Volume-groupName> <physicalVolume1> <physicalVolume2>
+|
+vgcreate -v myvolg /dev/xvdd1 /dev/xvdd2
+|		
+|
+vgs
+vgdisplay
+|
+lvs
+lvdisplay
+|
+lvcreate -v -L <Size> -n <nameofLv> <VolumeGroup>
+
+lvcreate -v -L 500m -n myvol1 myvolg
+
+lvcreate -v -L 900m -n myvol2 myvolg
+
+lvs
+vgs
+pvs
+
+ls -l /dev/myvolg/myvol1
+ls -l /dev/myvolg <== volume group Name
+
+ls -l /dev/dm-0 <== block device 
+ 
+# create a file system and mounting a logical volume 
+
+mkfs.ext4 /dev/mapper/myvolg-myvol1 
+
+mkdir /myLv1
+
+mount /dev/mapper/myvolg-myvol1 /myLv1
+
+df -Th
+
+###############
+
+
+lvcreate -v -L 100m -T myvolg/mythinpool
+				|
+			
+lvcreate -v -V 200m -T myvolg/mythinpool -n thinvol1
+
+#############################################################################
+Recap - LVM
+-----
+
+Thick LVM - no pooling
+
+[lv1] [lv2]
+|  - extend ; 			reduce - shrink the filesystem
+|    |->online(mounted)		 |->unmount |->Ensure the sufficient free space
+[VolumeGroup]				|		|
+					umount		resize /dev/myvolg/lvm1 <size>
+				 |->lvreduce -L <size> /dev/myvolg/lvm1
+
+				ex:   resize /dev/myvolg1/lvm1 50G
+				      lvreduce -L -50G /dev/myvolg1/lvm1
+
+				|->e2fsck -f /dev/myvolg1/lvm1
+				  # After shrninking the volume - check filesystem 
+				|
+				|->moun /dev/myvolg/lvm1 /d3
+
+Vs
+Think LVM - pooling (thin pool)
+|
+[] []	<== lvcreate -v -V 200m -T myvolg/mythinpool -n thinvol1
+ | |
+(thin pool) *	<== lvcreate -v -L 100m -T myvolg/mythinpool
+ |
+(Volume Group)
+ |
+
+|  - extend ; 			reduce - shrink the filesystem
+|    |->online(mounted)		 |->->Ensure the sufficient free space
+[VolumeGroup]						resize /dev/myvolg/Thinlvm1 <size>
+				 |->lvreduce -L <size> /dev/myvolg/Thinlvm1
+
+				ex:   resize /dev/myvolg1/lvm1 50G
+				      lvreduce -L -50G /dev/myvolg1/Thinlvm1
+
+				|->e2fsck -f /dev/myvolg1/lvm1
+			
+#############################################################################################
