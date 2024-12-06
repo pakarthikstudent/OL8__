@@ -1,0 +1,890 @@
+Network Configuration
+----------------------
+ |-> 1. network configuration files
+ |-> 2. GUI ->NetworkManager
+ |-> 3. GUI ->nm-tui
+ |-> 4. ip command
+	Vs
+ |-> 5. nmcli command 
+	-----
+	  |->control the Network Manager daemon
+			 -----------------------
+	  |->service restart is not required.
+
+ |-> network configuration files
+     ............................
+
+     /etc/sysconfig/network-scripts/ifcfg-<interfaceName>
+	
+     /etc/hosts 
+
+     /etc/hostname
+
+     /etc/resolv.conf
+	   |->DNS details
+	   |->created by NetworkManager daemon
+	   |->To add additional nameserver details 
+		-> vi /etc/sysconfig/network-scripts/ifcfg-eth0							
+		   DNS1="10.20.30.40" <-- primary nameserver
+		   DNS2='10.33.42.32' <-- secondary nameserver
+		   
+		  :wq
+		  |
+		  systemctl restart network
+
+	/etc/nsswitch.conf 
+		
+       
+ 2. NetworkManager GUI
+ 3. nmtui
+ 4. nmcli
+
+
+nmcli - contains list of object
+			  |---->each object having 1 more commands
+								|->argument 
+nmcli help # give get list of object
+
+nmcli help <help>
+
+nmcli help
+ |->list of objects
+
+nmcli <objectNAme> help
+nmcli <objectNAme> {help} 
+nmcli <objectNAme> <arguments> {help} 
+##################################################################
+
+
+[controlNode]	-----------------------[host01]  [host02] [host03]
+ - remote_node_details
+   remote_node IP;host;password
+
+##################################################################
+
+Debian Linux 
+-> cat /etc/network/interfaces  <== in RHL Linux /etc/sysconfig/network-scripts/ifcfg-*
+		    iface eth0 inet static
+		   address 192.168.1.234
+		   ..
+		   iface eth0 inet dhcp
+----------------------------------------
+
+	+----------+
+	|	   |
+	+----------+
+	  |->os is installed - there is NO network
+	  
+	  |->localhost ->127.0.0.1
+	-----------------------------------
+	+------------+			    +--------------+
+	|	     | IP:10.20.30.40	    |		   | IP:10.34.32.44
+	+------------+			    +--------------+
+	  A					B		
+     			<--------------->
+				|
+			    network interface devices
+				bridge;hub;switch;routes
+
+	traceroute google.com
+	
+	netstat -r  <---> (or) --> ip route show
+	netstat -t
+	netstat -u
+	|
+	ss -t
+	
+	----------------		------------
+	     ---|----			       ---<----
+		| TCP_ONLOAD  Vs 		      | TCPOFFLOAD (Kernel bypass)
+	     ---|---			       ...----
+	+-------|--------+		---------------
+		|				|
+		NIC				NIC
+
+ tcpdump 
+   |->Packet Capture - packets sent and received on NIC
+   |->Packet filter  - filters packets by protocol/port/SoureIP/Destination IP etc.,
+	|
+	Analysis - packet info + payload... 
+
+
+
+ wireshark - GUI
+
+ nslookup hostname
+
+ we can NIC speed 
+ ethtool -s enp0s3 speed 100 duplex full
+
+ [] <------[]
+
+ []------>[]
+
+ []--------->[]
+   <---------
+
+
+[root@krosumlabs D1]# ethtool enp0s3
+Settings for enp0s3:
+        Supported ports: [ TP ]
+        Supported link modes:   10baseT/Half 10baseT/Full
+                                100baseT/Half 100baseT/Full
+                                1000baseT/Full
+        Supported pause frame use: No
+        Supports auto-negotiation: Yes
+        Supported FEC modes: Not reported
+        Advertised link modes:  10baseT/Half 10baseT/Full
+                                100baseT/Half 100baseT/Full
+                                1000baseT/Full
+        Advertised pause frame use: No
+        Advertised auto-negotiation: Yes
+        Advertised FEC modes: Not reported
+        Speed: 1000Mb/s
+        Duplex: Full
+        Port: Twisted Pair
+        PHYAD: 0
+        Transceiver: internal
+        Auto-negotiation: on
+        MDI-X: off (auto)
+        Supports Wake-on: umbg
+        Wake-on: d
+        Current message level: 0x00000007 (7)
+                               drv probe link
+        Link detected: yes
+[root@krosumlabs D1]#
+[root@krosumlabs D1]# ethtool enp0s3|less
+[root@krosumlabs D1]#
+[root@krosumlabs D1]# ethtool enp0s3|less
+[root@krosumlabs D1]#
+[root@krosumlabs D1]# ethtool --driver enp0s3|less
+[root@krosumlabs D1]# ethtool --driver enp0s3
+driver: e1000
+version: 7.3.21-k8-NAPI
+firmware-version:
+expansion-rom-version:
+bus-info: 0000:00:03.0
+supports-statistics: yes
+supports-test: yes
+supports-eeprom-access: yes
+supports-register-dump: yes
+supports-priv-flags: no
+[root@krosumlabs D1]# ethtool enp0s3
+Settings for enp0s3:
+        Supported ports: [ TP ]
+        Supported link modes:   10baseT/Half 10baseT/Full
+                                100baseT/Half 100baseT/Full
+                                1000baseT/Full
+        Supported pause frame use: No
+        Supports auto-negotiation: Yes
+        Supported FEC modes: Not reported
+        Advertised link modes:  10baseT/Half 10baseT/Full
+                                100baseT/Half 100baseT/Full
+                                1000baseT/Full
+        Advertised pause frame use: No
+        Advertised auto-negotiation: Yes
+        Advertised FEC modes: Not reported
+        Speed: 1000Mb/s
+        Duplex: Full
+        Port: Twisted Pair
+        PHYAD: 0
+        Transceiver: internal
+        Auto-negotiation: on
+        MDI-X: off (auto)
+        Supports Wake-on: umbg
+        Wake-on: d
+        Current message level: 0x00000007 (7)
+                               drv probe link
+        Link detected: yes
+[root@krosumlabs D1]# ethtool enp0s3|less
+[root@krosumlabs D1]# ethtool --statistics enp0s3
+NIC statistics:
+     rx_packets: 3890
+     tx_packets: 1525
+     rx_bytes: 911629
+     tx_bytes: 192821
+     rx_broadcast: 1570
+     tx_broadcast: 4
+     rx_multicast: 11
+     tx_multicast: 16
+     rx_errors: 0
+     tx_errors: 0
+     tx_dropped: 0
+     multicast: 11
+     collisions: 0
+     rx_length_errors: 0
+     rx_over_errors: 0
+     rx_crc_errors: 0
+     rx_frame_errors: 0
+     rx_no_buffer_count: 0
+     rx_missed_errors: 0
+     tx_aborted_errors: 0
+     tx_carrier_errors: 0
+     tx_fifo_errors: 0
+     tx_heartbeat_errors: 0
+     tx_window_errors: 0
+     tx_abort_late_coll: 0
+     tx_deferred_ok: 0
+     tx_single_coll_ok: 0
+     tx_multi_coll_ok: 0
+     tx_timeout_count: 0
+     tx_restart_queue: 0
+     rx_long_length_errors: 0
+     rx_short_length_errors: 0
+     rx_align_errors: 0
+     tx_tcp_seg_good: 2
+     tx_tcp_seg_failed: 0
+     rx_flow_control_xon: 0
+     rx_flow_control_xoff: 0
+     tx_flow_control_xon: 0
+     tx_flow_control_xoff: 0
+     rx_long_byte_count: 911629
+     rx_csum_offload_good: 0
+     rx_csum_offload_errors: 0
+     alloc_rx_buff_failed: 0
+     tx_smbus: 0
+     rx_smbus: 0
+     dropped_smbus: 0
+[root@krosumlabs D1]# ethtool enp0s3|less
+Settings for enp0s3:
+        Supported ports: [ TP ]
+        Supported link modes:   10baseT/Half 10baseT/Full
+                                100baseT/Half 100baseT/Full
+                                1000baseT/Full
+        Supported pause frame use: No
+        Supports auto-negotiation: Yes
+        Supported FEC modes: Not reported
+        Advertised link modes:  10baseT/Half 10baseT/Full
+                                100baseT/Half 100baseT/Full
+                                1000baseT/Full
+        Advertised pause frame use: No
+        Advertised auto-negotiation: Yes
+        Advertised FEC modes: Not reported
+        Speed: 1000Mb/s
+        Duplex: Full
+        Port: Twisted Pair
+        PHYAD: 0
+        Transceiver: internal
+        Auto-negotiation: on
+        MDI-X: off (auto)
+        Supports Wake-on: umbg
+        Wake-on: d
+
+
+
+[root@node1 ~]# netstat -u
+Active Internet connections (w/o servers)
+Proto Recv-Q Send-Q Local Address           Foreign Address         State
+udp        0      0 192.168.1.5:bootpc      192.168.1.1:bootps      ESTABLISHED
+[root@node1 ~]# netstat -l
+Active Internet connections (only servers)
+Proto Recv-Q Send-Q Local Address           Foreign Address         State
+tcp        0      0 192.168.122.1:domain    0.0.0.0:*               LISTEN
+tcp        0      0 0.0.0.0:ssh             0.0.0.0:*               LISTEN
+tcp        0      0 0.0.0.0:sunrpc          0.0.0.0:*               LISTEN
+tcp        0      0 localhost:ipp           0.0.0.0:*               LISTEN
+tcp6       0      0 [::]:hbci               [::]:*                  LISTEN
+tcp6       0      0 [::]:websm              [::]:*                  LISTEN
+tcp6       0      0 localhost:ipp           [::]:*                  LISTEN
+tcp6       0      0 [::]:ssh                [::]:*                  LISTEN
+tcp6       0      0 [::]:sunrpc             [::]:*                  LISTEN
+udp        0      0 192.168.122.1:domain    0.0.0.0:*
+udp        0      0 0.0.0.0:bootps          0.0.0.0:*
+udp        0      0 0.0.0.0:sunrpc          0.0.0.0:*
+udp        0      0 0.0.0.0:mdns            0.0.0.0:*
+udp        0      0 localhost:323           0.0.0.0:*
+udp        0      0 0.0.0.0:39411           0.0.0.0:*
+udp6       0      0 [::]:sunrpc             [::]:*
+udp6       0      0 [::]:mdns               [::]:*
+udp6       0      0 localhost:323           [::]:*
+udp6       0      0 node1:dhcpv6-client     [::]:*
+udp6       0      0 [::]:34682              [::]:*
+raw6       0      0 [::]:ipv6-icmp          [::]:*                  7
+Active UNIX domain sockets (only servers)
+Proto RefCnt Flags       Type       State         I-Node   Path
+unix  2      [ ACC ]     STREAM     LISTENING     53958    /tmp/.ICE-unix/8525
+unix  2      [ ACC ]     STREAM     LISTENING     53957    @/tmp/.ICE-unix/8525
+unix  2      [ ACC ]     STREAM     LISTENING     53430    /run/user/1000/systemd/private
+unix  2      [ ACC ]     STREAM     LISTENING     53437    /run/user/1000/bus
+unix  2      [ ACC ]     STREAM     LISTENING     61951    /run/user/0/systemd/private
+unix  2      [ ACC ]     STREAM     LISTENING     61964    /run/user/0/pipewire-0
+unix  2      [ ACC ]     STREAM     LISTENING     53440    /run/user/1000/pulse/native
+unix  2      [ ACC ]     STREAM     LISTENING     61965    /run/user/0/bus
+unix  2      [ ACC ]     STREAM     LISTENING     53441    /run/user/1000/pipewire-0
+unix  2      [ ACC ]     STREAM     LISTENING     53571    /run/user/1000/keyring/control
+unix  2      [ ACC ]     STREAM     LISTENING     54039    /run/user/1000/keyring/pkcs11
+unix  2      [ ACC ]     STREAM     LISTENING     54049    /run/user/1000/keyring/ssh
+unix  2      [ ACC ]     STREAM     LISTENING     54241    /run/user/1000/wayland-0
+unix  2      [ ACC ]     STREAM     LISTENING     54162    @/tmp/.X11-unix/X0
+unix  2      [ ACC ]     STREAM     LISTENING     12733    /run/systemd/journal/stdout
+unix  2      [ ACC ]     STREAM     LISTENING     26322    /run/gssproxy.sock
+unix  2      [ ACC ]     STREAM     LISTENING     26321    /var/lib/gssproxy/default.sock
+unix  2      [ ACC ]     STREAM     LISTENING     30573    @/tmp/dbus-95vde3ep
+unix  2      [ ACC ]     STREAM     LISTENING     54163    /tmp/.X11-unix/X0
+unix  2      [ ACC ]     STREAM     LISTENING     22940    @ISCSID_UIP_ABSTRACT_NAMESPACE
+unix  2      [ ACC ]     STREAM     LISTENING     53584    /tmp/.esd-1000/socket
+unix  2      [ ACC ]     STREAM     LISTENING     30572    @/tmp/dbus-5pAPraws
+unix  2      [ ACC ]     STREAM     LISTENING     54426    @/tmp/dbus-2svaON2e
+unix  2      [ ACC ]     STREAM     LISTENING     22939    /run/libvirt/libvirt-sock
+unix  2      [ ACC ]     STREAM     LISTENING     22941    /run/libvirt/virtlogd-sock
+unix  2      [ ACC ]     STREAM     LISTENING     22942    /var/run/cups/cups.sock
+unix  2      [ ACC ]     STREAM     LISTENING     22943    /var/run/.heim_org.h5l.kcm-socket
+unix  2      [ ACC ]     STREAM     LISTENING     22951    @ISCSIADM_ABSTRACT_NAMESPACE
+unix  2      [ ACC ]     STREAM     LISTENING     22944    /run/dbus/system_bus_socket
+unix  2      [ ACC ]     STREAM     LISTENING     22950    /run/avahi-daemon/socket
+unix  2      [ ACC ]     STREAM     LISTENING     22952    /run/libvirt/libvirt-sock-ro
+unix  2      [ ACC ]     STREAM     LISTENING     22953    /run/libvirt/libvirt-admin-sock
+unix  2      [ ACC ]     STREAM     LISTENING     22954    /run/libvirt/virtlockd-sock
+unix  2      [ ACC ]     STREAM     LISTENING     54326    @/tmp/dbus-ZiEJ1IBkex
+unix  2      [ ACC ]     STREAM     LISTENING     59892    /run/user/0/gnupg/d.umzxnmcm7oqssghb4n5bzz8m/S.gpg-agent
+unix  2      [ ACC ]     STREAM     LISTENING     19603    /run/systemd/private
+unix  2      [ ACC ]     STREAM     LISTENING     59893    /run/user/0/gnupg/d.umzxnmcm7oqssghb4n5bzz8m/S.gpg-agent.extra
+unix  2      [ ACC ]     STREAM     LISTENING     59894    /run/user/0/gnupg/d.umzxnmcm7oqssghb4n5bzz8m/S.gpg-agent.browser
+unix  2      [ ACC ]     SEQPACKET  LISTENING     19651    /run/systemd/coredump
+unix  2      [ ACC ]     STREAM     LISTENING     59895    /run/user/0/gnupg/d.umzxnmcm7oqssghb4n5bzz8m/S.gpg-agent.ssh
+unix  2      [ ACC ]     STREAM     LISTENING     60746    /run/user/0/gnupg/d.bb1dehjoz6b69o7m6qbx9kma/S.gpg-agent
+unix  2      [ ACC ]     STREAM     LISTENING     60747    /run/user/0/gnupg/d.bb1dehjoz6b69o7m6qbx9kma/S.gpg-agent.extra
+unix  2      [ ACC ]     STREAM     LISTENING     19734    /run/lvm/lvmpolld.socket
+unix  2      [ ACC ]     STREAM     LISTENING     60748    /run/user/0/gnupg/d.bb1dehjoz6b69o7m6qbx9kma/S.gpg-agent.browser
+unix  2      [ ACC ]     STREAM     LISTENING     60749    /run/user/0/gnupg/d.bb1dehjoz6b69o7m6qbx9kma/S.gpg-agent.ssh
+unix  2      [ ACC ]     STREAM     LISTENING     19821    /run/rpcbind.sock
+unix  2      [ ACC ]     STREAM     LISTENING     60866    /run/user/0/gnupg/d.1mbhf4wejowjmhdrxpqd713r/S.gpg-agent
+unix  2      [ ACC ]     STREAM     LISTENING     60867    /run/user/0/gnupg/d.1mbhf4wejowjmhdrxpqd713r/S.gpg-agent.extra
+unix  2      [ ACC ]     SEQPACKET  LISTENING     19875    /run/udev/control
+unix  2      [ ACC ]     STREAM     LISTENING     60868    /run/user/0/gnupg/d.1mbhf4wejowjmhdrxpqd713r/S.gpg-agent.browser
+unix  2      [ ACC ]     STREAM     LISTENING     24395    /var/run/mcelog-client
+unix  2      [ ACC ]     STREAM     LISTENING     60869    /run/user/0/gnupg/d.1mbhf4wejowjmhdrxpqd713r/S.gpg-agent.ssh
+unix  2      [ ACC ]     STREAM     LISTENING     24547    /var/run/lsm/ipc/simc
+unix  2      [ ACC ]     STREAM     LISTENING     24548    /var/run/lsm/ipc/sim
+unix  2      [ ACC ]     STREAM     LISTENING     61261    /run/user/0/gnupg/d.d6w5picfjnohzpcygxyghur5/S.gpg-agent
+unix  2      [ ACC ]     STREAM     LISTENING     61262    /run/user/0/gnupg/d.d6w5picfjnohzpcygxyghur5/S.gpg-agent.extra
+unix  2      [ ACC ]     STREAM     LISTENING     61263    /run/user/0/gnupg/d.d6w5picfjnohzpcygxyghur5/S.gpg-agent.browser
+unix  2      [ ACC ]     STREAM     LISTENING     61264    /run/user/0/gnupg/d.d6w5picfjnohzpcygxyghur5/S.gpg-agent.ssh
+Active Bluetooth connections (only servers)
+Proto  Destination       Source            State         PSM DCID   SCID      IMTU    OMTU Security
+Proto  Destination       Source            State     Channel
+[root@node1 ~]#
+[root@node1 ~]#
+[root@node1 ~]# netstat -r
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags   MSS Window  irtt Iface
+default         192.168.1.1     0.0.0.0         UG        0 0          0 enp0s3
+192.168.1.0     0.0.0.0         255.255.255.0   U         0 0          0 enp0s3
+192.168.122.0   0.0.0.0         255.255.255.0   U         0 0          0 virbr0
+[root@node1 ~]#
+[root@node1 ~]# route
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+default         192.168.1.1     0.0.0.0         UG    100    0        0 enp0s3
+192.168.1.0     0.0.0.0         255.255.255.0   U     100    0        0 enp0s3
+192.168.122.0   0.0.0.0         255.255.255.0   U     0      0        0 virbr0
+[root@node1 ~]#
+
+
+ ###################################################################
+
+DNS
+  toplevel TLD
+  secondlevel domain SLD
+ . (dot)
+
+     TLD
+     |---->gTLD .com .org .net
+     |---->ccTLD .in .us .uk
+
+  www.abc.com --->/etc/hosts  ->/etc/resolv.conf
+                                       |  
+                                       nameserver 172.16.200.34 - recursive search domain
+                                                   ..
+
+ dig trace abc.com
+
+  |[broswer] [/etc/resolv.conf]|
+  |____________________________|
+      |
+    DNS---------[dns root]
+                 |
+    --------------
+    
+##########################################################################################
+network security
+..................
+
+chroot - change root
+------
+/bin
+/usr/bin
+/sbin
+/usr/bin
+/D1
+|
+|
+<root directory>
+
+root@host~]# <command>
+		|
+		process(ChildProcess)
+		
+
+root@host~]# uname - /bin/uname
+Linux		    			+-----------------+ 
+root@host~]# pwd			|  date	OK	  |
+/root					|  cal 	OK        |
+root@host~]# ps				|  ps ->Error	  |
+<process result>			|  ls ->Error     |
+					+-----------------+
+chroot
+---------
+/bin/fileA <-- executable file
+/bin/bash <-- parent of all our running commands
+
+ fileA.so -like .dll in windows
+  -------
+   |->R+
+ --------------------------------------------------->new env
+	chroot <new_env_path>
+		
+[root@krosumlabs D1]# which bash
+/usr/bin/bash
+[root@krosumlabs D1]# clear
+[root@krosumlabs D1]# mkdir -p /home/student/jail
+[root@krosumlabs D1]# mkdir -p /home/student/jail/lib64
+[root@krosumlabs D1]# mkdir -p /home/student/jail/bin
+[root@krosumlabs D1]#
+[root@krosumlabs D1]# ldd /usr/bin/bash
+        linux-vdso.so.1 =>  (0x00007fffd0ad0000)
+        libtinfo.so.5 => /lib64/libtinfo.so.5 (0x00007f8f0babd000)
+        libdl.so.2 => /lib64/libdl.so.2 (0x00007f8f0b8b9000)
+        libc.so.6 => /lib64/libc.so.6 (0x00007f8f0b4eb000)
+        /lib64/ld-linux-x86-64.so.2 (0x00007f8f0bce7000)
+[root@krosumlabs D1]#
+[root@krosumlabs D1]# cp /lib64/libtinfo.so.5 /home/student/jail/lib64/
+[root@krosumlabs D1]# cp /lib64/libdl.so.2 /home/student/jail/lib64/
+[root@krosumlabs D1]# cp /lib64/libc.so.6 /home/student/jail/lib64/
+[root@krosumlabs D1]# cp /lib64/ld-linux-x86-64.so.2 /home/student/jail/lib64/
+[root@krosumlabs D1]#
+[root@krosumlabs D1]# cp /usr/bin/bash /home/student/jail/bin/
+[root@krosumlabs D1]# chroot /home/student/jail/bin/
+chroot: failed to run command ‘/bin/bash’: No such file or directory
+[root@krosumlabs D1]# chroot /home/student/jail/
+bash-4.2# pwd
+/
+bash-4.2# date
+bash: date: command not found
+bash-4.2# ls
+bash: ls: command not found
+bash-4.2# ps
+bash: ps: command not found
+bash-4.2# cal
+bash: cal: command not found
+bash-4.2# uname
+bash: uname: command not found
+bash-4.2#
+bash-4.2#
+bash-4.2# cd
+bash: cd: /root: No such file or directory
+bash-4.2# pwd
+/
+bash-4.2# exit
+exit
+[root@krosumlabs D1]# which date
+/usr/bin/date
+[root@krosumlabs D1]# cp /usr/bin/date /home/student/jail/bin/
+[root@krosumlabs D1]#
+[root@krosumlabs D1]# ldd /usr/bin/date
+        linux-vdso.so.1 =>  (0x00007ffc574fe000)
+        libc.so.6 => /lib64/libc.so.6 (0x00007ff0802bd000)
+        /lib64/ld-linux-x86-64.so.2 (0x00007ff08068b000)
+[root@krosumlabs D1]#
+[root@krosumlabs D1]# chroot /home/student/jail/
+bash-4.2#
+bash-4.2# date
+bash: date: command not found
+bash-4.2# exit
+exit
+[root@krosumlabs D1]# cp /lib64/ld-linux-x86-64.so.2 /home/student/jail/lib64/
+cp: overwrite ‘/home/student/jail/lib64/ld-linux-x86-64.so.2’? y
+[root@krosumlabs D1]# /bin/date
+Fri Dec  6 12:25:28 IST 2024
+[root@krosumlabs D1]# cp /bin/date /home/student/jail/bin/
+cp: overwrite ‘/home/student/jail/bin/date’? y
+[root@krosumlabs D1]#
+[root@krosumlabs D1]# chroot /home/student/jail/
+bash-4.2#
+bash-4.2# date
+bash: date: command not found
+bash-4.2# pwd
+/
+bash-4.2# /bin/date
+Fri Dec  6 06:55:51 UTC 2024
+bash-4.2#
+bash-4.2# /bin/cal
+bash: /bin/cal: No such file or directory
+bash-4.2# /bin/ls
+bash: /bin/ls: No such file or directory
+bash-4.2# /bin/ps
+bash: /bin/ps: No such file or directory
+bash-4.2#
+bash-4.2# exit
+exit
+[root@krosumlabs D1]#
+
+#############################################################
+
+iptables
+ - Collection of Chain
+		  |->Collection of rules
+				   -----
+				    condition - match
+	Table
++----------------------+
+|  __________
+|  | chain1 |
+|  --|rule1||
+|    |rule2||
+|  ---------
+|  | chain2|
+|  | |rule1|
+|  | |rule2|
+|
++----------------------+
+
+iptables --table <table> -chain rule ....<action>
+
+Table	- Chain
+------    ------
+filter 	  INPUT,OUTPUT and FORWARD
+nat	  PREROUTING,POSTROUTING
+mangle    PREROUTTING,OUTPUT
+.
+
+
+iptables -t filter --check INPUT -s <IP> -j {ACCEPT|DROP}
+
+iptables --list
+OL[56]
+-----------------------------------------------------------
+OL7 - firewalld
+	|
+	simple user interface 
+
+zone
+ -firewall configuration
+
+# yum install firewall-config
+#
+# GUI
+
+In commandline ->firewall-cmd  
+
+ firewall-cmd --zone=public --add-service=<> # runtime
+					   |__nfs
+					   |__ssh
+		Vs
+  firewall-cmd --permanent --zone=public --add-service=<> # permanent 
+
+####
+
+nftables (OL8)
+
+|
+[root@node1 ~]# nft list ruleset inet
+[root@node1 ~]#
+[root@node1 ~]#
+[root@node1 ~]# nft add table inet filter
+[root@node1 ~]# nft list ruleset inet
+table inet filter {
+}
+[root@node1 ~]# nft add chain inet filter input
+[root@node1 ~]# nft list ruleset inet
+table inet filter {
+        chain input {
+        }
+}
+[root@node1 ~]# nft add rule inet filter input tcp dport 22 accept
+[root@node1 ~]#
+[root@node1 ~]# nft list ruleset inet
+table inet filter {
+        chain input {
+                tcp dport 22 accept
+        }
+}
+[root@node1 ~]#
+[root@node1 ~]# # /etc/sysconfig/nftables.conf
+[root@node1 ~]#
+###############################################################################
+
+nfs - network filesystem
+	      ----------
+
+[host01]  <--------------------->	[host02]
+  |
+ /D1				
+
+server m/c					client m/c
+|						|
+|						mount 
+export /D1 directory
+|
+rpc-bind 
+/D1			--------------------->/D1 
+
+exportfs -o rw,no_root_squash  *:/D1
+|
+showmount -e			
+/D1 *					-----> mount host01:/D1  /myL1
+..						..
+
+firewall-cmd --add-service=nfs --zone=public 
+
+
+iSCSI
+------
+protocol
+sharing: block level
+storage: less space compared with NFS 
+
+NFS
+----
+filesystem
+sharing: file
+storage: more
+
+#########################################################################
+
+[root@node1 ~]# systemctl stop firewalld
+[root@node1 ~]# mkdir /D1
+[root@node1 ~]#
+[root@node1 ~]# exportfs -o rw,no_root_squash *:/D1
+[root@node1 ~]# showmount -e
+^C
+[root@node1 ~]# systemctl restart nfs-server
+
+
+[root@node1 ~]#
+[root@node1 ~]#
+[root@node1 ~]# systemctl status nfs-server
+[root@node1 ~]# exportfs -o rw,no_root_squash *:/D1
+[root@node1 ~]# cd /D1
+[root@node1 D1]# ls -t
+sys.log  p1.log
+[root@node1 D1]# cat sys.log
+
+#### Client m/c 
+[root@krosumlabs D1]# mount 192.168.1.5:/D1 /mnt
+[root@krosumlabs D1]# df -Th
+Filesystem          Type      Size  Used Avail Use% Mounted on
+
+192.168.1.5:/D1     nfs4       47G   12G   35G  26% /mnt
+
+[root@krosumlabs ~]# ls /mnt
+p1.log  sys.log
+[root@krosumlabs ~]#
+##########################################################################################
+
+
+User: gcc p1.c -o p1  | notepad ..| games| DB 
+    ----------------------------------------|-----
+					    |
+Kernel:					    |
+
+echo "value" >/proc/sys/kernel/.... 
+	(or)
+
+ sysctl -w param1.parma2.file = value
+-----------------------------------------------
+ |->update the kernel parameters
+
+
+Running Kernel -parameters details are under /proc 
+	       |->update any parameter (Ex:increase memory size;reduce size)
+	
+/etc/sysctl.d/99-oracle-database-preinstall-19c-sysctl.conf	
+
+Linux Process
+|
+each process - own address 
+
+p1 ->101 - 0x1234
+|
+p2 ->102 - 0x3452
+
+p1 <--IPC-> p2
+	
+unnamed pipe  | 
+named pipe - FIFO
+system V IPC
+---------------
+message queue
+
+[]           | [][][][]       |
+[] ----------|		      |
+[]	     |----------------|
+[]	send			receive
+			
+		[][][][]
+
+	
+shared memory(SHM)
+-----------------
+	
+		+--------+
+		|	 |
+		+--------+
+		|SHM	 |<-- attached
+		|________|<-- deattach
+
+
+semaphore - count
+
+ c=3 [] [][]
+
+ [p1][][]
+     ------//count =2
+		   |->2 resource will be available
+c--
+c=2
+c--
+c=1
+c--
+c=0 <- there is no queue
+c++
+c++     
+########
+small window size 
+
+send 1000bytes --->receiver
+     .........
+TCP Window Size in 4000 bytes
+
+##################################################################################
+TCPIP window size define -> /proc/sys/net/core/
+##################################################################################
+                   
+system monitoring
+- collect system infrastructure metric details
+				------
+				 |->file,process,memory,disk IO,cpu etc.,
+				 |->measurement            
+
+sosreport
+...
+ ----/proc
+ ----/sysfs
+
+sosreport -l
+
+iostat 
+iostat n m
+
+Other monitoring tools
+|
+|->htop ; iotop
+|->monitor
+|->promtheus(TSDB) - infrastructure & application monitoring - visualization
+#############################################################################
+system logging
+--------------
+|->/var/log
+
+ rsyslogd 
+
+rsyslog
+|
+/etc/rsyslog.conf
+
+[filter]	[Action]
+
+systemd-journald 
+
+journalctl ->query the systemd-journal
+
+journalctl
+
+[root@node1 D1]# systemctl stop ab
+[root@node1 D1]#
+[root@node1 D1]#
+[root@node1 D1]# journalctl -u ab
+-- Logs begin at Fri 2024-12-06 07:59:07 IST, end at Fri 2024-12-06 17:02:21 IST. --
+Dec 06 07:59:39 node1 systemd[1]: Started About myCPU LoadBalance.
+Dec 06 17:02:21 node1 systemd[1]: Stopping About myCPU LoadBalance...
+Dec 06 17:02:21 node1 systemd[1]: ab.service: Succeeded.
+Dec 06 17:02:21 node1 systemd[1]: Stopped About myCPU LoadBalance.
+[root@node1 D1]#
+[root@node1 D1]#
+
+journalctl -r
+journalctl -n <N> # ex: journalctl -n 5
+journalctl -p 
+
+systemd-journald <== daemon
+
+
+###################################################################
+
+OL7 ->OL8
+
+1st -> Backup files
+	- configuration files
+	- installed/downloaded binary files
+	- database(application)
+	
+2nd -> yum update -y  
+       yum upgrade -y # shifting new version of any existing application
+
+3rd -> Install upgrade tool package called leapp
+					   -----
+	yum -y install leapp 
+	|
+4th -> Pre-Upgrade Check
+	leapp preupgrade 
+	|
+	Generate log file =>/var/log/leapp/leapp-preupgrade.log
+
+5th -> disable external repository 
+	|
+	vi /etc/yum.repo.d/public-ol7..repo
+	
+	[repo]
+	..
+	enabled=0
+	:wq
+	(or)
+	yum-config-manager --disable <repository>
+
+	yum repolist
+
+6th -> upgrade leapp package
+	|
+	leapp upgrade 
+|
+7th -> reboot 
+	|
+	OL8
+	|
+	uname -a
+	cat /etc/oracle-release (or) cat /etc/os-release 
+	|
+	enable external repository (optional)
+	
+	-> dnf update -y
+	|
+ ##########################################################################
+[root@krosumlabs ~]# cat /etc/profile
+
+function devinfo(){
+        ping -c $1 $2 >>/var/log/ping_test.log
+}
+export -f devinfo
+[root@krosumlabs ~]#
+
+
+student@krosumlabs ~]$ cat /home/student/.bashrc 
+
+function mysysinfo(){
+        uname -rs >>~/test.log
+        vmstat >>~/test.log
+}
+export -f mysysinfo
+----------------------------------------------------
+
